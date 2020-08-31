@@ -1,5 +1,6 @@
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.PriorityQueue;
 import java.util.Queue;
@@ -7,26 +8,17 @@ import java.util.Random;
 import java.util.Scanner;
 
 public class Dijkstra {
-    private static long distance(ArrayList<Edge>[] adj,  int s, int t, ArrayList<Edge> edges) {
-        
-    	
-    	//long ans1 = findDistanceBellman(adj, s, t, edges);
-    	
-    	//return ans1;
-    	return findDistanceDijsktra(adj, s, t);
-    }
-    
+    /* for stress testing
     private static Long findDistanceBellman(ArrayList<Edge>[] adj,  int s, int t, ArrayList<Edge> edges) {
     	Long[] distance = new Long[adj.length];
     	Arrays.fill(distance, Long.MAX_VALUE);
     	
-    	//Edge start = new Edge(s,s,0l);
     	distance[s] = 0l;
     	
     	    	
     	for(int i=0; i<adj.length;i++) {
     		for(Edge edge : edges) {
-    			 Relax(edge.from, edge.to, edge.cost,distance);
+    			// Relax(edge.from, edge.to, edge.cost,distance);
     		}
     	}
     	
@@ -48,84 +40,113 @@ public class Dijkstra {
    		return flag;
 		
 	}
-
-	private static Long findDistanceDijsktra(ArrayList<Edge>[] adj, int s, int t) {
+    */
+	
+   	private static Long findDistanceDijsktra(HashMap<Integer, Vertex> graph, int s, int t) {
+   		PriorityQueue<Vertex> pQueue = new PriorityQueue<Vertex>();
    		
-		boolean visited[] = new boolean[adj.length];
-   		PriorityQueue< Edge> pQueue = new PriorityQueue<Edge>();
-   		Queue<Edge> queue = new  LinkedList<Edge>();
+   		graph.get(s).setDistance(0l);
+   		pQueue.add(graph.get(s));
    		
-   		Long[] distance = new Long[adj.length];
-    	
-    	Edge start = new Edge(s,s,0l);
-    	distance[s] = 0l;
-    	
-    	queue.add(start);
-   		while(!queue.isEmpty()) {
-    		Edge e = queue.poll();
-    		int v = e.to;
-    		if(visited[v])
-    			 continue;
-    		visited[v] = true;
-    		
-    		for(Edge adjEdge: adj[v]) {
-    			pQueue.add(adjEdge);
-    		}
-    		
-    		while(!pQueue.isEmpty()) {
-    			Edge adjV= pQueue.poll();
-    			int adjvertex = adjV.to;
-    			
-    			if( distance[adjvertex]==null || distance[adjvertex] > distance[v] + adjV.cost) {
-					distance[adjvertex] = distance[v] + adjV.cost;
-					queue.add(adjV);
-					visited[adjvertex] = false;
-	    		}
-    		}    		
-    	}
-   		return (distance[t]==null)?-1:distance[t];
+   		while(!pQueue.isEmpty()) {
+   			
+   			Vertex v = pQueue.poll();
+   			if(v.isVisited())
+   				continue;
+   			
+   			v.setVisited(true);
+   			
+   			for(Edge adjEdge: v.getEdges()) {
+   				if(adjEdge.to.getDistance() > adjEdge.from.getDistance()+adjEdge.cost) {
+   					adjEdge.to.setDistance(adjEdge.from.getDistance()+adjEdge.cost);
+   					pQueue.add(adjEdge.to);
+   				}
+   			}
+   			
+   		}
+   		return (graph.get(t).distance == Long.MAX_VALUE)?-1:graph.get(t).distance;
+   	}
+   	
+	public static class Vertex implements Comparable<Vertex>{
+		private int id;
+		private Long distance;
+		private boolean visited; 
+		private ArrayList<Edge> edges;
+		public Vertex(int id) {
+			this.id = id;
+			this.distance = Long.MAX_VALUE;
+			this.visited = false;
+			this.edges = new ArrayList<Dijkstra.Edge>();
+		}
+		
+		public int getId() {
+			return this.id;
+		}
+		
+		public boolean isVisited() {
+			return this.visited;
+		}
+		
+		public void setVisited(boolean visited) {
+			this.visited = visited;
+		}
+		
+		public void setDistance(Long d) {
+			this.distance = d;
+		}
+		
+		public Long getDistance() {
+			return this.distance;
+		}
+		
+		public void addEdge(Edge e) {
+			this.edges.add(e);
+		}
+		
+		public ArrayList<Edge> getEdges(){
+			return this.edges;
+		}
+		
+		@Override
+		public int compareTo(Vertex o) {
+			Long diff = this.distance - o.distance;
+			if(diff < 0) return -1;
+			else if(diff >=0) return 1;
+			else return 0;
+		}
+		
+		
 		
 	}
    	
-	public static class Edge implements Comparable<Edge>{
-   		Integer from;
-   		Integer to;
+	public static class Edge {
+   		Vertex from;
+   		Vertex to;
    		Long cost;
-   		public Edge(Integer from,Integer to, Long cost) {
+   		public Edge(Vertex from,Vertex to, Long cost) {
    			this.from = from;
    			this.to = to;
    			this.cost = cost;
    			
-   		}
-		@Override
-		public int compareTo(Edge o) {
-			Long diff = this.cost - o.cost;
-			if(diff < 0) return -1;
-			else if(diff >=0) return 1;
-			else return 0;
-			//return this.cost - o.cost;
-		}
-   		
-   		
+   		}   		
    	}
 
 
 	public static void main(String[] args) {
 		int test=0;
 		if(test==1) {
-		  stressTest();
+		 // stressTest();
 		}
 		else {
 		
 		Scanner scanner = new Scanner(System.in);
         int n = scanner.nextInt();
         int m = scanner.nextInt();
-        ArrayList<Edge>[] adj = (ArrayList<Edge>[])new ArrayList[n];
-       // ArrayList<Edge> edges = new ArrayList<Edge>(m);
-        //ArrayList<Edge>[] cost = (ArrayList<Edge>[])new ArrayList[n];
+        HashMap<Integer, Vertex> graph = new HashMap<Integer, Vertex>(n);
+        
         for (int i = 0; i < n; i++) {
-            adj[i] = new ArrayList<Edge>();
-            //cost[i] = new ArrayList<Edge>();
+        	Vertex v = new Vertex(i);
+            graph.put(i, v);
         }
         for (int i = 0; i < m; i++) {
             int x, y;
@@ -141,21 +162,22 @@ public class Dijkstra {
             }
             	
             
-            Edge e = new Edge(x-1,y-1,w);
+            Edge e = new Edge(graph.get(x-1),graph.get(y-1),w);
+            graph.get(x-1).addEdge(e);
            // edges.add(e);
-            adj[x - 1].add(e);
+           // adj[x - 1].get(i);
             //cost[x - 1].add(e);
         }
         int x = scanner.nextInt() - 1;
         int y = scanner.nextInt() - 1;
         scanner.close();
         //System.out.println(distance(adj, x, y,edges));
-        System.out.println(findDistanceDijsktra(adj, x, y));
+        System.out.println(findDistanceDijsktra(graph, x, y));
 		}
         //*/
     }
 	
-	
+	/*
 	static boolean stressTest() {
 		Random r = new Random();
 		while(true) {
@@ -192,7 +214,7 @@ public class Dijkstra {
 		}
 		//return true;
 	}
-
+*/
 
 }
 

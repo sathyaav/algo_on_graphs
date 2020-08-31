@@ -20,7 +20,7 @@ public class NegativeCycle {
     			if(Relax(edge.from, edge.to, edge.cost,distance))
     				 flag=true;
     		}
-    		if(!flag) // if no update in the vertices then there is no negative cycle
+    		if(!flag) // if no update in the vertices then all the vertices have correct distance hence we can break
     			return 0;
     	}
     	
